@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="los_nav" name="los_nav_node" type="los_nav_node">
+    <param name="global_frame" value="wamv/odom" />
+    <param name="base_frame" value="wamv/base_link" />
+    <param name="kp" value="0.2" />
+  </node>
+</launch>
