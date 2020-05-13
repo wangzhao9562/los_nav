@@ -1,3 +1,11 @@
+/*
+ * @Author: Zhao Wang
+ * @Date: 2020-05-07 
+ * @LastEditTime: 2020-05-10 
+ * @LastEditors: Zhao Wang
+ * @Description: Implementation of common methods for los nav objects
+ * @FilePath: /los_nav/src/pf_los_controller.cpp
+ */
 #include <los_nav/common.h>
 
 namespace los_nav{

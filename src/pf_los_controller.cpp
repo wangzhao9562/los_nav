@@ -1,9 +1,9 @@
 /*
- * @Author: your name
+ * @Author: Zhao Wang
  * @Date: 2020-05-07 15:03:37
  * @LastEditTime: 2020-05-10 13:56:59
- * @LastEditors: your name
- * @Description: In User Settings Edit
+ * @LastEditors: Zhao Wang
+ * @Description: Implementation of interface of PFLosController class
  * @FilePath: /los_nav/src/pf_los_controller.cpp
  */
 #include <los_nav/pf_los_controller.h>
@@ -50,7 +50,7 @@ namespace los_nav{
         }
         */
 
-        double r = this->pid_param_.kp_ * det_yaw;
+        double r = this->los_ctrl_param_.kp_ * det_yaw;
         return std::make_pair(r, 0);
     }
 };

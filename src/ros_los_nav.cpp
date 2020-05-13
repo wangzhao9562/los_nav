@@ -1,9 +1,17 @@
+/*
+ * @Author: Zhao Wang
+ * @Date: 2020-05-11 
+ * @LastEditTime: 2020-05-13
+ * @LastEditors: Zhao Wang
+ * @Description: Implementation of interface of RosLosNav class
+ * @FilePath: /los_nav/src/clf_los_controller.cpp
+ */
 #include <los_nav/ros_los_nav.h>
 
 namespace los_nav{
     RosLosNav::RosLosNav(tf::TransformListener& tf) : tf_(tf), performer_(nullptr), los_nav_as_(nullptr)
     {
-        ROS_WARN("Start initialization");
+        ROS_INFO("Start initialization");
         flock_ = PTHREAD_RWLOCK_INITIALIZER; // rw lock initialization
         ros::NodeHandle private_nh("~");
         ros::NodeHandle nh;
@@ -20,13 +28,16 @@ namespace los_nav{
         private_nh.param("kp", kp_, 0.8);
         private_nh.param("kd", kd_, 0.0);
         private_nh.param("ki", ki_, 0.0);
+        private_nh.param("dx_err", dx_err_, 2.0);
+        private_nh.param("dy_err", dy_err_, 4.0);
+        private_nh.param("factor", los_factor_, 3.5);
 
-        ROS_WARN_STREAM("Follow velocity: " << vel_);
-        ROS_WARN_STREAM("Transform tolerance: " << stop_tolerance_);
-        ROS_WARN_STREAM("global_frame: " << global_frame_);
-        ROS_WARN_STREAM("base_frame: " << base_frame_);
-        ROS_WARN_STREAM("control_frequency: " << control_frequency_);
-        ROS_WARN_STREAM("PID parameters: " << "kp: " << kp_ << " kd: " << kd_ << " ki: " << ki_);
+        ROS_INFO_STREAM("Follow velocity: " << vel_);
+        ROS_INFO_STREAM("Transform tolerance: " << stop_tolerance_);
+        ROS_INFO_STREAM("global_frame: " << global_frame_);
+        ROS_INFO_STREAM("base_frame: " << base_frame_);
+        ROS_INFO_STREAM("control_frequency: " << control_frequency_);
+        ROS_INFO_STREAM("PID parameters: " << "kp: " << kp_ << " kd: " << kd_ << " ki: " << ki_);
 
         cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1); // publish velocity command
         goal_sub_ = simple_nh.subscribe<geometry_msgs::PoseStamped>("goal", 1, boost::bind(&RosLosNav::goalCb, this, _1));
@@ -34,16 +45,18 @@ namespace los_nav{
         action_goal_pub_ = action_nh.advertise<los_nav_msgs::LosNavActionGoal>("goal", 1);
         current_goal_pub_ = private_nh.advertise<geometry_msgs::PoseStamped>("current_goal", 1);
 
+        vis_pub_ = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
+
         los_nav_as_ = new LosNavActionServer(ros::NodeHandle(), "los_nav", boost::bind(&RosLosNav::executeCb, this, _1), false);
 
-        ROS_WARN("Create control performer");
-        performer_ = new LosNav(kp_, kd_, ki_);
+        ROS_INFO("Create control performer");
+        performer_ = new LosNav(kp_, kd_, ki_, dx_err_, dy_err_, los_factor_);
         performer_->initialize(stop_tolerance_);
 
-        ROS_WARN("Start actionlib server"); 
+        ROS_INFO("Start actionlib server"); 
         los_nav_as_->start();
 
-        ROS_WARN("Initialization done");
+        ROS_INFO("Initialization done");
         /* Preserved for dynamic configuration initialization */
     }
 
@@ -58,7 +71,7 @@ namespace los_nav{
     }
 
     void RosLosNav::executeCb(const los_nav_msgs::LosNavGoalConstPtr& los_nav_goal){
-        ROS_WARN("Received goal");
+        ROS_INFO("Received goal");
         if(!isQuaternionValid(los_nav_goal->target_pose.pose.orientation)){
             los_nav_as_->setAborted(los_nav_msgs::LosNavResult(), 
                 "Aborting on goal cus it was sent with an invalid quaternion!");
@@ -67,6 +80,9 @@ namespace los_nav{
         geometry_msgs::PoseStamped goal = goalToGlobalFrame(los_nav_goal->target_pose);
 
         current_goal_pub_.publish(goal);
+        // visualization_msgs::Marker m = generateVisPoint(goal);
+        // vis_pub_.publish(m); 
+        // ROS_WARN("Marker publish done");
 
         ros::Rate r(control_frequency_);
         
@@ -75,10 +91,10 @@ namespace los_nav{
         ros::NodeHandle n;
 
         while(n.ok()){
-            ROS_WARN("In controlling loop");
+            ROS_INFO("In controlling loop");
             if(los_nav_as_->isPreemptRequested()){
                 if(los_nav_as_->isNewGoalAvailable()){
-                    ROS_WARN("Interrupt with new goal");
+                    ROS_INFO("Interrupt with new goal");
                     los_nav_msgs::LosNavGoal new_goal = *los_nav_as_->acceptNewGoal();
                     if(!isQuaternionValid(new_goal.target_pose.pose.orientation)){
                         los_nav_as_->setAborted(los_nav_msgs::LosNavResult(), 
@@ -100,7 +116,7 @@ namespace los_nav{
                 current_goal_pub_.publish(goal);
             }
        
-            ROS_WARN("Start control");
+            ROS_INFO("Start control");
             bool done = controlCycle(goal);
             if(done){
                 return;
@@ -130,7 +146,7 @@ namespace los_nav{
         pthread_rwlock_rdlock(&flock_);
         if(performer_){
             if(performer_->isControllerAvailable()){
-                ROS_WARN("Compute controlling quantity");
+                ROS_INFO("Compute controlling quantity");
                 std::pair<double, int> ctrl_fb = performer_->computeCtrlQuantity(
                     current_position.pose.position.x, current_position.pose.position.y,
                     goal.pose.position.x, goal.pose.position.y,
@@ -144,8 +160,9 @@ namespace los_nav{
                     return false;
                 }
                 else if(ctrl_fb.second == 1){
-                    ROS_WARN("Controlling done");
+                    ROS_INFO("Controlling done");
                     publishZeroVelocity();
+                    los_nav_as_->setSucceeded(los_nav_msgs::LosNavResult(), "Goal reached!");
                     return true;
                 }
                 else{
@@ -154,7 +171,7 @@ namespace los_nav{
                 }
             }
             else{
-                ROS_WARN("Wait for the initialization of controller");
+                ROS_INFO("Wait for the initialization of controller");
                 return false;
             }
         }
@@ -172,7 +189,7 @@ namespace los_nav{
             tf_.transformPose(global_frame_, goal_pose, global_pose);
         }
         catch(tf::TransformException& ex){
-            ROS_WARN("los_nav: Failed to transform the goal pose from %s into the %s frame: %s", 
+            ROS_INFO("los_nav: Failed to transform the goal pose from %s into the %s frame: %s", 
                 goal_pose.frame_id_.c_str(), global_frame_.c_str(), ex.what());
             return goal_pose_msg;
         }
@@ -203,7 +220,7 @@ namespace los_nav{
     }
 
     void RosLosNav::goalCb(const geometry_msgs::PoseStamped::ConstPtr& goal){
-        ROS_WARN("Transform received goal");
+        ROS_INFO("Transform received goal");
         los_nav_msgs::LosNavActionGoal action_goal;
         action_goal.header.stamp = ros::Time::now();
         action_goal.goal.target_pose = *goal;
@@ -246,7 +263,7 @@ namespace los_nav{
         if(performer_){
             delete performer_;
         }
-        performer_ = new LosNav(kp_, kd_, ki_);
+        performer_ = new LosNav(kp_, kd_, ki_, dx_err_, dy_err_, los_factor_);
         pthread_rwlock_unlock(&flock_);
     }
 
@@ -274,15 +291,16 @@ namespace los_nav{
                     break;
                 case 1:
                     if(performer_->getMissionType() != MissionType::C_LINE){
-                        performer_->initialize(type->start_x, type->start_y, 
-                                              type->k, type->b, type->is_reverse,
-                                              stop_tolerance_);
+                        CLine line{type->lines[0].start_x, type->lines[0].start_y,
+                            type->lines[0].end_x, type->lines[0].end_y,
+                            type->lines[0].k, type->lines[0].b, type->lines[0].is_reverse};
+                        
+                        performer_->initialize(line, los_factor_, stop_tolerance_);
                     }
                     break;
                 case 2:
                     if(performer_->getMissionType() != MissionType::CIRCLE){
-                        performer_->initialize(type->origin_x, type->origin_y, type->r,
-                                               stop_tolerance_);
+                    /* Preserved for implementation of controller initialization */
                     }
                 default:
                     break;
@@ -293,6 +311,33 @@ namespace los_nav{
             resetState();
         }
         pthread_rwlock_unlock(&flock_);
+     }
+ 
+     visualization_msgs::Marker RosLosNav::generateVisPoint(const geometry_msgs::PoseStamped& goal){
+        ROS_WARN("Create visualization marker");
+        visualization_msgs::Marker vis_point;
+        ROS_WARN("Base property initialization");
+        vis_point.header.frame_id = goal.header.frame_id;
+        vis_point.header.stamp = ros::Time::now();
+        // vis_point.ns = "/los_nav";
+        vis_point.action = visualization_msgs::Marker::ADD;
+        vis_point.type = visualization_msgs::Marker::SPHERE;
+        vis_point.pose.position = goal.pose.position;
+        vis_point.pose.orientation = goal.pose.orientation;
+        vis_point.id = 0;
+        ROS_WARN("Set scale");
+        // default size is 0.2
+        vis_point.scale.x = 0.2;
+        vis_point.scale.y = 0.2;
+        vis_point.scale.z = 0.2;
+        ROS_WARN("Set color");
+        // default color is green
+        vis_point.color.a = 1.0;
+        vis_point.color.g = 1.0;
+        vis_point.color.r = 0.0; 
+        vis_point.color.b = 0.0;
+
+        ROS_WARN("Marker setting done");
      }
 
 }; // end of ns

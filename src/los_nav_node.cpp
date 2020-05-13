@@ -1,9 +1,9 @@
 /*
- * @Author: your name
+ * @Author: Zhao Wang
  * @Date: 2020-05-09 20:08:07
  * @LastEditTime: 2020-05-09 20:55:46
- * @LastEditors: your name
- * @Description: In User Settings Edit
+ * @LastEditors: Zhao Wang
+ * @Description: Driver program of los nav node
  * @FilePath: /los_nav/src/los_nav_node.cpp
  */
 #include <los_nav/ros_los_nav.h>
