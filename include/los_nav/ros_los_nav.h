@@ -1,9 +1,9 @@
 /*
- * @Author: your name
+ * @Author: Zhao Wang
  * @Date: 2020-05-07 17:40:29
- * @LastEditTime : 2020-05-09 21:05:58
- * @LastEditors  : Please set LastEditors
- * @Description: In User Settings Edit
+ * @LastEditTime : 2020-05-13 
+ * @LastEditors  : Zhao Wang
+ * @Description: Definition of RosLosNav class
  * @FilePath: /los_nav/include/los_nav/ros_los_nav.h
  */
 #ifndef ROS_LOS_NAV_H_
@@ -19,6 +19,8 @@
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/Twist.h>
 #include <dynamic_reconfigure/server.h>
+#include <visualization_msgs/Marker.h>
+
 #include <std_srvs/Empty.h>
 #include <string>
 #include <boost/thread.hpp>
@@ -54,6 +56,8 @@ private:
     /* Reserved for a callback function to modify the mission type of controller */
     void missionTypeCb(const los_nav::Mission::ConstPtr& type);
 
+    visualization_msgs::Marker generateVisPoint(const geometry_msgs::PoseStamped& goal);
+
 private:
     LosNav* performer_;
     tf::TransformListener& tf_;
@@ -67,6 +71,8 @@ private:
     double control_frequency_;
 
     double kp_, kd_, ki_; // PID parameters
+    double dx_err_, dy_err_;
+    double los_factor_;
 
     tf::Stamped<tf::Pose> global_pose_;
     
@@ -78,6 +84,9 @@ private:
     ros::Publisher cmd_vel_pub_;
     ros::Publisher action_goal_pub_;
     ros::Publisher current_goal_pub_;
+
+    /* Preserved for visualized parameters publisher */
+    ros::Publisher vis_pub_;
 }; // end of class
 }; // end of ns 
 

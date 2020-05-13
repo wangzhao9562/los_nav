@@ -1,20 +1,27 @@
+/*
+ * @Author: Zhao Wang
+ * @Date: 2020-05-07 
+ * @LastEditTime: 2020-05-10 
+ * @LastEditors: Zhao Wang
+ * @Description: Definition of LosNav class
+ * @FilePath: /los_nav/src/pf_los_controller.cpp
+ */
 #ifndef LOS_NAV_H_
 #define LOS_NAV_H_
 
 #include <los_nav/base_los_controller.h>
-#include <los_nav/pf_los_controller.h>
 #include <los_nav/common.h>
 #include <utility>
 
 namespace los_nav{
 class LosNav{
 public:
-    LosNav(double kp, double kd, double ki);
+    LosNav(double kp, double kd, double ki, double dx_err, double dy_err, double los_factor);
     ~LosNav();
 
     bool initialize(double stop_tolerance);
-    bool initialize(double s_x, double s_y, double k, double b, bool is_reverse, double stop_tolerance);
-    bool initialize(double o_x, double o_y, double radius, double stop_tolerance);
+    bool initialize(CLine line, double los_factor,  double stop_tolerance);
+    bool initialize(Circle circle, double los_factor, double stop_tolerance);
 
     bool isControllerAvailable()const{
         return is_init_;
@@ -39,8 +46,9 @@ public:
 
 private:
     MissionType mission_type_;
-    PIDParam pid_param_;
+    LosCtrlParam los_ctrl_param_;
     BaseLosController* base_controller_;
+    double los_factor_;
     bool is_init_;
 }; // end of class
 }; // end of ns

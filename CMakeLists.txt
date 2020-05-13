@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   los_nav_msgs
   message_generation
   nav_msgs
+  visualization_msgs
   pluginlib
   roscpp
   rospy
@@ -22,6 +23,8 @@ add_message_files(
   DIRECTORY msg
   FILES
   Mission.msg
+  CommonCircle.msg
+  CommonLine.msg
 )
 
 generate_messages(
@@ -54,6 +57,7 @@ add_library(los_nav
   src/common.cpp
   src/los_nav.cpp
   src/pf_los_controller.cpp
+  src/clf_los_controller.cpp
   src/ros_los_nav.cpp
 )
 

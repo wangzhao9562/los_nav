@@ -1,30 +1,29 @@
 /*
  * @Author: Zhao Wang
- * @Date: 2020-05-07 
- * @LastEditTime: 2020-05-13
+ * @Date: 2020-05-13 11:13:33
+ * @LastEditTime: 2020-05-13 13:36:21
  * @LastEditors: Zhao Wang
- * @Description: Definition of PFLosController class
- * @FilePath: /los_nav/src/pf_los_controller.cpp
+ * @Description: Definition of CLFLosController class
+ * @FilePath: /los_nav/include/los_nav/slf_los_controller.h
  */
-#ifndef PF_LOS_CONTROLLER_H_
-#define PF_LOS_CONTROLLER_H_
+#ifndef CLF_LOS_CONTROLLER_H_
+#define CLF_LOS_CONTROLLER_H_
 
 #include <los_nav/base_los_controller.h>
 
 namespace los_nav{
 /**
- * @brief Point follow LOS implementation
+ * @brief Common line follow LOS implementation
  */
-class PFLosController : public BaseLosController{
-using Point = std::pair<double, double>;
+class CLFLosController : public BaseLosController{
 public:
     /**
      * @brief Constructor
      * @param LosCtrlParam pid_param PID parameters for LOS controller
      * @param Point Coordinate of target point
      */ 
-    PFLosController(LosCtrlParam los_ctrl_param, double stop_tolerance) : 
-        BaseLosController(los_ctrl_param, stop_tolerance){}
+    CLFLosController(LosCtrlParam pid_param, double los_factor, double stop_tolerance) : 
+        BaseLosController(pid_param, stop_tolerance), factor_(los_factor){}
 
     /**
      * @brief Compute control quantity for point follow
@@ -36,10 +35,11 @@ public:
      * @return Compute result
      */ 
     std::pair<double, int> computeCtrlQuantity(double x, double y, double tx, double ty, double yaw)override;
-
 private:
-    double det_yaw_; 
-};
-};
+    CLine line_;
+    double factor_;
+    double det_phi_{0.0}, det_phi_diff_{0.0};    
+}; // end of class
+}; // end of ns
 
 #endif
