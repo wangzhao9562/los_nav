@@ -1,8 +1,8 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-07 17:40:29
- * @LastEditTime : 2020-05-13 
- * @LastEditors  : Zhao Wang
+ * @LastEditTime: 2020-05-14 10:18:21
+ * @LastEditors: Please set LastEditors
  * @Description: Definition of RosLosNav class
  * @FilePath: /los_nav/include/los_nav/ros_los_nav.h
  */

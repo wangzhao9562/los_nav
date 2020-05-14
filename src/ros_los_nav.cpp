@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-11 
- * @LastEditTime: 2020-05-14 10:00:57
+ * @LastEditTime: 2020-05-14 12:28:23
  * @LastEditors: Please set LastEditors
  * @Description: Implementation of interface of RosLosNav class
  * @FilePath: /los_nav/src/clf_los_controller.cpp
@@ -157,6 +157,7 @@ namespace los_nav{
                 if(ctrl_fb.second == 0){
                     cmd_vel.linear.x = vel_;
                     cmd_vel.angular.z = -ctrl_fb.first;
+                    ROS_WARN_STREAM("cmd_vel: " << "linear velocity x: " << vel_ << " angular velocity z: " << cmd_vel.angular.z);
                     cmd_vel_pub_.publish(cmd_vel);
                     return false;
                 }
@@ -302,6 +303,9 @@ namespace los_nav{
                 case 2:
                     if(performer_->getMissionType() != MissionType::CIRCLE){
                     /* Preserved for implementation of controller initialization */
+                        Circle circle{type->circle.origin_x, type->circle.origin_y, 
+                            type->circle.r};
+                        performer_->initialize(circle, los_factor_, stop_tolerance_);
                     }
                 default:
                     break;

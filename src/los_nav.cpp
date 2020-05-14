@@ -1,14 +1,15 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-07 
- * @LastEditTime: 2020-05-10 
- * @LastEditors: Zhao Wang
+ * @LastEditTime: 2020-05-14 12:27:44
+ * @LastEditors: Please set LastEditors
  * @Description: Implementation of interface of LosNav class
  * @FilePath: /los_nav/src/pf_los_controller.cpp
  */
 #include <los_nav/los_nav.h>
 #include <los_nav/pf_los_controller.h>
 #include <los_nav/clf_los_controller.h>
+#include <los_nav/cirf_los_controller.h>
 
 namespace los_nav{
     LosNav::LosNav(double kp, double kd, double ki, 
@@ -63,6 +64,7 @@ namespace los_nav{
             is_init_ = false;
         }
         /* Reserved for implementation*/
+        base_controller_ = new CirFLosController(los_ctrl_param_, los_factor, stop_tolerance);
         is_init_ = true;
         return true;
     }
