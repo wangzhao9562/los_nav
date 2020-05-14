@@ -1,8 +1,8 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-11 
- * @LastEditTime: 2020-05-13
- * @LastEditors: Zhao Wang
+ * @LastEditTime: 2020-05-14 10:00:57
+ * @LastEditors: Please set LastEditors
  * @Description: Implementation of interface of RosLosNav class
  * @FilePath: /los_nav/src/clf_los_controller.cpp
  */
@@ -80,9 +80,6 @@ namespace los_nav{
         geometry_msgs::PoseStamped goal = goalToGlobalFrame(los_nav_goal->target_pose);
 
         current_goal_pub_.publish(goal);
-        // visualization_msgs::Marker m = generateVisPoint(goal);
-        // vis_pub_.publish(m); 
-        // ROS_WARN("Marker publish done");
 
         ros::Rate r(control_frequency_);
         
@@ -91,6 +88,10 @@ namespace los_nav{
         ros::NodeHandle n;
 
         while(n.ok()){
+            visualization_msgs::Marker m;
+            generateVisPoint(m, goal);
+            vis_pub_.publish(m); 
+
             ROS_INFO("In controlling loop");
             if(los_nav_as_->isPreemptRequested()){
                 if(los_nav_as_->isNewGoalAvailable()){
@@ -313,31 +314,24 @@ namespace los_nav{
         pthread_rwlock_unlock(&flock_);
      }
  
-     visualization_msgs::Marker RosLosNav::generateVisPoint(const geometry_msgs::PoseStamped& goal){
-        ROS_WARN("Create visualization marker");
-        visualization_msgs::Marker vis_point;
-        ROS_WARN("Base property initialization");
-        vis_point.header.frame_id = goal.header.frame_id;
-        vis_point.header.stamp = ros::Time::now();
-        // vis_point.ns = "/los_nav";
-        vis_point.action = visualization_msgs::Marker::ADD;
-        vis_point.type = visualization_msgs::Marker::SPHERE;
-        vis_point.pose.position = goal.pose.position;
-        vis_point.pose.orientation = goal.pose.orientation;
-        vis_point.id = 0;
-        ROS_WARN("Set scale");
+     void RosLosNav::generateVisPoint(visualization_msgs::Marker& m, const geometry_msgs::PoseStamped& goal){
+        m.header.frame_id = goal.header.frame_id;
+        m.header.stamp = ros::Time::now();
+        // m.ns = "/los_nav";
+        m.action = visualization_msgs::Marker::ADD;
+        m.type = visualization_msgs::Marker::SPHERE;
+        m.pose.position = goal.pose.position;
+        m.pose.orientation = goal.pose.orientation;
+        m.id = 0;
         // default size is 0.2
-        vis_point.scale.x = 0.2;
-        vis_point.scale.y = 0.2;
-        vis_point.scale.z = 0.2;
-        ROS_WARN("Set color");
+        m.scale.x = 1.0;
+        m.scale.y = 1.0;
+        m.scale.z = 1.0;
         // default color is green
-        vis_point.color.a = 1.0;
-        vis_point.color.g = 1.0;
-        vis_point.color.r = 0.0; 
-        vis_point.color.b = 0.0;
-
-        ROS_WARN("Marker setting done");
+        m.color.a = 1.0f;
+        m.color.g = 1.0f;
+        m.color.r = 0.0f; 
+        m.color.b = 0.0f;
      }
 
 }; // end of ns

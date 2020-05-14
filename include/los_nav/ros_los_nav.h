@@ -56,7 +56,7 @@ private:
     /* Reserved for a callback function to modify the mission type of controller */
     void missionTypeCb(const los_nav::Mission::ConstPtr& type);
 
-    visualization_msgs::Marker generateVisPoint(const geometry_msgs::PoseStamped& goal);
+    void generateVisPoint(visualization_msgs::Marker& m, const geometry_msgs::PoseStamped& goal);
 
 private:
     LosNav* performer_;
