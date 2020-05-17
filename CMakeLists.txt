@@ -19,13 +19,13 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 
-add_message_files(
-  DIRECTORY msg
-  FILES
-  Mission.msg
-  CommonCircle.msg
-  CommonLine.msg
-)
+# add_message_files(
+#   DIRECTORY msg
+#   FILES
+#   Mission.msg
+#   CommonCircle.msg
+#   CommonLine.msg
+# )
 
 generate_messages(
   DEPENDENCIES
@@ -58,6 +58,7 @@ add_library(los_nav
   src/los_nav.cpp
   src/pf_los_controller.cpp
   src/clf_los_controller.cpp
+  src/cirf_los_controller.cpp
   src/ros_los_nav.cpp
 )
 
@@ -78,4 +79,20 @@ target_link_libraries(los_nav_node
 )
 
 add_dependencies(los_nav_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+
+add_executable(los_nav_test
+  test/test_client.cpp
+)
+
+target_link_libraries(los_nav_test
+  los_nav
+  ${catkin_LIBRARIES}
+)
+
+add_dependencies(los_nav_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+SET(CMAKE_BUILD_TYPE "Debug")
+SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb")
+SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 
