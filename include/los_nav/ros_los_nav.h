@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-07 17:40:29
- * @LastEditTime: 2020-05-14 10:18:21
+ * @LastEditTime: 2020-05-16 09:57:34
  * @LastEditors: Please set LastEditors
  * @Description: Definition of RosLosNav class
  * @FilePath: /los_nav/include/los_nav/ros_los_nav.h
@@ -12,7 +12,8 @@
 #include <ros/ros.h>
 #include <tf/tf.h>
 #include <los_nav/los_nav.h>
-#include <los_nav/Mission.h>
+// #include <los_nav/Mission.h>
+#include <los_nav_msgs/Mission.h>
 #include <tf/transform_listener.h>
 #include <actionlib/server/simple_action_server.h>
 #include <los_nav_msgs/LosNavAction.h>
@@ -20,8 +21,9 @@
 #include <geometry_msgs/Twist.h>
 #include <dynamic_reconfigure/server.h>
 #include <visualization_msgs/Marker.h>
-
 #include <std_srvs/Empty.h>
+
+#include <vector>
 #include <string>
 #include <boost/thread.hpp>
 #include <cmath>
@@ -39,13 +41,14 @@ public:
 private:
     void executeCb(const los_nav_msgs::LosNavGoalConstPtr& los_nav_goal);
 
-    bool controlCycle(const geometry_msgs::PoseStamped& goal);
+    // bool controlCycle(const geometry_msgs::PoseStamped& goal);
+    bool controlCycle(const los_nav_msgs::Mission& mission);
 
     geometry_msgs::PoseStamped goalToGlobalFrame(const geometry_msgs::PoseStamped& goal_pose_msg);
 
     bool isQuaternionValid(const geometry_msgs::Quaternion& q)const;
 
-    void goalCb(const geometry_msgs::PoseStamped::ConstPtr& goal);
+    // void goalCb(const geometry_msgs::PoseStamped::ConstPtr& goal); // Discarded
 
     bool getRobotPose(tf::Stamped<tf::Pose>& global_pose)const;
 
@@ -54,10 +57,18 @@ private:
     void publishZeroVelocity();
 
     /* Reserved for a callback function to modify the mission type of controller */
-    void missionTypeCb(const los_nav::Mission::ConstPtr& type);
+    // void missionTypeCb(const los_nav::Mission::ConstPtr& type);
+    void missionTypeCb(const los_nav_msgs::Mission::ConstPtr& type);
 
-    void generateVisPoint(visualization_msgs::Marker& m, const geometry_msgs::PoseStamped& goal);
+    void generateVisTarget(visualization_msgs::Marker& m, const geometry_msgs::PoseStamped& goal);
 
+    void generateVisLineStrip(visualization_msgs::Marker& m, const std::vector<geometry_msgs::Point>& p_vec, std::string frame_id);
+
+    void generateVisCircle(visualization_msgs::Marker& m, double ori_x, double ori_y, double radius, std::string frame_id);
+
+    std::vector<geometry_msgs::Point> circleToPoints(double ori_x, double ori_y, double radius);
+
+    void switchController(const los_nav_msgs::Mission& current_mission);
 private:
     LosNav* performer_;
     tf::TransformListener& tf_;
@@ -87,6 +98,8 @@ private:
 
     /* Preserved for visualized parameters publisher */
     ros::Publisher vis_pub_;
+
+    visualization_msgs::Marker marker_;
 }; // end of class
 }; // end of ns 
 

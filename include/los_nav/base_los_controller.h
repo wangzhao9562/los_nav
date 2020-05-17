@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-07 13:08:08
- * @LastEditTime: 2020-05-13 17:58:45
+ * @LastEditTime: 2020-05-17 09:01:49
  * @LastEditors: Please set LastEditors
  * @Description: Definition of BaseLosController class, the fundamental class of all los controller
  * @FilePath: /los_nav/include/los_nav/base_los_controller.h
@@ -34,6 +34,7 @@ class BaseLosController{
 public:
     BaseLosController(LosCtrlParam los_ctrl_param, double stop_tolerance) : 
         los_ctrl_param_(los_ctrl_param), stop_tolerance_(stop_tolerance) {}
+    virtual ~BaseLosController(){};
   
     /**
      * @brief Compute control quantity for control mission
