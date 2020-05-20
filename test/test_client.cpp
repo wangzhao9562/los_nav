@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-15 13:06:13
- * @LastEditTime: 2020-05-17 21:39:44
+ * @LastEditTime: 2020-05-20 18:43:06
  * @LastEditors: Please set LastEditors
  * @Description: Test client for los nav
  * @FilePath: /los_nav/test/test_client.cpp
@@ -69,17 +69,20 @@ int main(int argc, char** argv){
             mission.goal.pose.position.y = std::atof(target_y_c_str);
             mission.goal.pose.position.z = 0.0;
             mission.goal.pose.orientation.w = 1.0;
-            mission_pub.publish(mission);
+        
+            // mission_pub.publish(mission);
         }
         break;
     case 1:
         { 
-            if(argc < 5){
+            if(argc < 6){
                 ROS_ERROR("Input argument is not enough!");
                 exit(1);
             }
 
-            for(int i = 1; i < argc - 4; i += 4){
+            mission.mission_type = 1;
+
+            for(int i = 2; i < argc; i += 4){
                 const char* line_start_x = argv[i];
                 const char* line_start_y = argv[i + 1];
                 const char* line_end_x = argv[i + 2];
@@ -89,30 +92,39 @@ int main(int argc, char** argv){
                 c_line.start_y = std::atof(line_start_y);
                 c_line.end_x = std::atof(line_end_x);
                 c_line.end_y = std::atof(line_end_y);
-                double k = std::atan2(c_line.start_y - c_line.end_y, c_line.start_x - c_line.end_x);
+                // double k = std::atan2(c_line.start_y - c_line.end_y, c_line.start_x - c_line.end_x);
+                double k = static_cast<double>(c_line.start_y - c_line.end_y) / (c_line.start_x - c_line.end_x); 
                 double b = c_line.start_y - c_line.start_x * k;
                 c_line.k = k;
                 c_line.b = b;
                 c_line.is_reverse = false;
+
+                mission.goal.pose.position.x = c_line.end_x;
+                mission.goal.pose.position.y = c_line.end_y;
+                mission.goal.pose.position.z = 0.0;
+                mission.goal.pose.orientation.w = 1.0;
+
                 mission.lines.push_back(c_line);
             }
 
-            mission_pub.publish(mission);
+            // mission_pub.publish(mission);
         }
         break;
     case 2:
         {
-            if(argc != 4){
+            if(argc != 5){
                 ROS_ERROR("Illegal input");
                 exit(1);
             }
+            mission.mission_type = 2;
+
             const char* circle_origin_x = argv[2];
             const char* circle_origin_y = argv[3];
             const char* circle_r = argv[4];
             mission.circle.origin_x = std::atof(circle_origin_x);
             mission.circle.origin_y = std::atof(circle_origin_y);
             mission.circle.r = std::atof(circle_r);
-            mission_pub.publish(mission);
+            // mission_pub.publish(mission);
         }
         break;
     default:
