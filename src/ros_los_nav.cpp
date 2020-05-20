@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-11 
- * @LastEditTime: 2020-05-17 21:38:07
+ * @LastEditTime: 2020-05-20 20:43:57
  * @LastEditors: Please set LastEditors
  * @Description: Implementation of interface of RosLosNav class
  * @FilePath: /los_nav/src/clf_los_controller.cpp
@@ -43,8 +43,7 @@ namespace los_nav{
 
         cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1); // publish velocity command
         // goal_sub_ = simple_nh.subscribe<geometry_msgs::PoseStamped>("goal", 1, boost::bind(&RosLosNav::goalCb, this, _1));
-        // mission_type_sub_ = nh.subscribe<los_nav::Mission>("mission_type", 1, boost::bind(&RosLosNav::missionTypeCb, this, _1));
-        mission_type_sub_ = nh.subscribe<los_nav_msgs::Mission>("mission_type", 1, boost::bind(&RosLosNav::missionTypeCb, this, _1));
+        // mission_type_sub_ = nh.subscribe<los_nav_msgs::Mission>("mission_type", 1, boost::bind(&RosLosNav::missionTypeCb, this, _1));
         action_goal_pub_ = action_nh.advertise<los_nav_msgs::LosNavActionGoal>("goal", 1);
         current_goal_pub_ = private_nh.advertise<los_nav_msgs::Mission>("current_goal", 1);
 
@@ -75,12 +74,6 @@ namespace los_nav{
 
     void RosLosNav::executeCb(const los_nav_msgs::LosNavGoalConstPtr& los_nav_goal){
         ROS_INFO("Received goal");
-        // if(!isQuaternionValid(los_nav_goal->target_pose.pose.orientation)){
-        //    los_nav_as_->setAborted(los_nav_msgs::LosNavResult(), 
-        //        "Aborting on goal cus it was sent with an invalid quaternion!");
-        //    return;
-        //}
-        // geometry_msgs::PoseStamped goal = goalToGlobalFrame(los_nav_goal->target_pose);
           
         los_nav_msgs::Mission current_mission = los_nav_goal->mission_msgs;
 
@@ -117,18 +110,6 @@ namespace los_nav{
                     // current_mission = new_mission.mission_msgs;
                     // current_goal_pub_.publish(current_mission);
                     los_nav_as_->setPreempted();
-                    /*
-                    los_nav_msgs::LosNavActionGoal action_goal;
-                    action_goal.header.frame_id = global_frame_;
-                    action_goal.header.stamp = ros::Time::now();
-                    action_goal.goal.mission_msgs.header.frame_id = current_mission.header.frame_id;
-                    action_goal.goal.mission_msgs.header.stamp = current_mission.header.stamp;
-                    action_goal.goal.mission_msgs.mission_type = current_mission.mission_type;
-                    action_goal.goal.mission_msgs.goal = current_mission.goal;
-                    action_goal.goal.mission_msgs.lines = current_mission.lines;
-                    action_goal.goal.mission_msgs.circle = current_mission.circle;
-                    action_goal_pub_.publish(action_goal);
-                    */
                     return;
                 }
                 else{
@@ -171,36 +152,43 @@ namespace los_nav{
         if(performer_){
             if(performer_->isControllerAvailable()){
                 ROS_INFO("Compute controlling quantity");
+                
                 std::pair<double, int> ctrl_fb = performer_->computeCtrlQuantity(
                     current_position.pose.position.x, current_position.pose.position.y,
                     mission.goal.pose.position.x, mission.goal.pose.position.y,
                     tf::getYaw(current_position.pose.orientation));
-                pthread_rwlock_unlock(&flock_);
-                
+
                 if(ctrl_fb.second == 0){
                     cmd_vel.linear.x = vel_;
                     cmd_vel.angular.z = -ctrl_fb.first;
                     ROS_WARN_STREAM("cmd_vel: " << "linear velocity x: " << vel_ << " angular velocity z: " << cmd_vel.angular.z);
                     cmd_vel_pub_.publish(cmd_vel);
+                    pthread_rwlock_unlock(&flock_);
                     return false;
                 }
                 else if(ctrl_fb.second == 1){
                     ROS_INFO("Controlling done");
                     publishZeroVelocity();
                     los_nav_as_->setSucceeded(los_nav_msgs::LosNavResult(), "Goal reached!");
+                    pthread_rwlock_unlock(&flock_);
                     return true;
                 }
                 else{
                     publishZeroVelocity();
+                    pthread_rwlock_unlock(&flock_);
                     return false;
                 }
             }
             else{
                 ROS_INFO("Wait for the initialization of controller");
+                pthread_rwlock_unlock(&flock_);
                 return false;
             }
         }
+        
         resetState(); 
+        // pthread_rwlock_unlock(&flock_);
+        
         return false;
     }
 
@@ -312,7 +300,8 @@ namespace los_nav{
         action_goal_pub_.publish(action_goal);
      }
  
-     void RosLosNav::generateVisTarget(visualization_msgs::Marker& m, const geometry_msgs::PoseStamped& goal){
+     void RosLosNav::generateVisTarget(visualization_msgs::Marker& marker, const geometry_msgs::PoseStamped& goal){
+        visualization_msgs::Marker m;
         m.header.frame_id = goal.header.frame_id;
         m.header.stamp = ros::Time::now();
         // m.ns = "/los_nav";
@@ -330,29 +319,35 @@ namespace los_nav{
         m.color.g = 1.0f;
         m.color.r = 0.0f; 
         m.color.b = 0.0f;
+
+        marker = m;
      }
 
-     void RosLosNav::generateVisLineStrip(visualization_msgs::Marker& m, const std::vector<geometry_msgs::Point>& p_vec, 
+     void RosLosNav::generateVisLineStrip(visualization_msgs::Marker& marker, const std::vector<geometry_msgs::Point>& p_vec, 
         std::string frame_id){
+        visualization_msgs::Marker m;    
         m.header.frame_id = frame_id;
         m.header.stamp = ros::Time::now();
         m.action = visualization_msgs::Marker::ADD;
         m.type = visualization_msgs::Marker::LINE_STRIP;
         m.pose.orientation.w = 1.0;
         m.id = 1;
-        m.scale.x = 1.0;
+        m.scale.x = 0.5;
         m.color.b = 1.0;
         m.color.a = 1.0;
         for(auto ele : p_vec){
             m.points.push_back(ele);
         }
+
+        marker = m;
      }
 
-    void RosLosNav::generateVisCircle(visualization_msgs::Marker& m, double ori_x, double ori_y, double radius, 
+    void RosLosNav::generateVisCircle(visualization_msgs::Marker& marker, double ori_x, double ori_y, double radius, 
         std::string frame_id)
      {
         std::vector<geometry_msgs::Point> p_vec = std::move(circleToPoints(ori_x, ori_y, radius));
-        generateVisLineStrip(m, p_vec, frame_id);        
+        ROS_INFO("circle point num: %d", p_vec.size());
+        generateVisLineStrip(marker, p_vec, frame_id);     
      }
 
     std::vector<geometry_msgs::Point> RosLosNav::circleToPoints(double ori_x, double ori_y, double radius){
@@ -363,18 +358,22 @@ namespace los_nav{
             p.x = ori_x + radius * std::cos(rad);
             p.y = ori_y + radius * std::sin(rad);
             p.z = 0.0;
+            p_vec.push_back(p);
         }
+        ROS_INFO("origin circle point num: %d", p_vec.size());    
         return p_vec;
      }
 
     void RosLosNav::switchController(const los_nav_msgs::Mission& current_mission){
+        ROS_INFO("Received mission type: %d", current_mission.mission_type);
         switch (current_mission.mission_type)
         {
             case 0:
             {
                 if(performer_->getMissionType() != MissionType::POINT){        
-                    ROS_INFO("Switch to point follow controller");
+                    ROS_INFO("Update visualization marker");
                     generateVisTarget(marker_, current_mission.goal);
+                    ROS_INFO("Switch to point follow controller");
                     performer_->initialize(stop_tolerance_);
                 }
                 else{
@@ -385,7 +384,6 @@ namespace los_nav{
             break;
             case 1:
             {
-                ROS_INFO("Switch to common line follow controller");
                 CLine line{current_mission.lines[0].start_x, current_mission.lines[0].start_y,
                             current_mission.lines[0].end_x, current_mission.lines[0].end_y,
                             current_mission.lines[0].k, current_mission.lines[0].b, current_mission.lines[0].is_reverse};
@@ -402,8 +400,10 @@ namespace los_nav{
                 p_vec.push_back(e_p);
                 if(performer_->getMissionType() != MissionType::C_LINE){
                     // Regenerate visualization marker
+                    ROS_INFO("Update visualization marker");
                     generateVisLineStrip(marker_, p_vec, current_mission.header.frame_id);
                     // Initialize los nav performer
+                    ROS_INFO("Switch to common line follow controller");
                     performer_->initialize(line, los_factor_, stop_tolerance_);
                 }
                 else{
@@ -415,12 +415,13 @@ namespace los_nav{
             case 2:
             {
                 if(performer_->getMissionType() != MissionType::CIRCLE){
-                    ROS_INFO("Initialize controller with circle following mission");
                     /* Preserved for implementation of controller initialization */
                     Circle circle{current_mission.circle.origin_x, current_mission.circle.origin_y, 
                             current_mission.circle.r};
+                    ROS_INFO("Update visualization marker");
                     generateVisCircle(marker_, current_mission.circle.origin_x, current_mission.circle.origin_y, current_mission.circle.r, 
                             current_mission.header.frame_id);
+                    ROS_INFO("Switch to circle following mission");        
                     performer_->initialize(circle, los_factor_, stop_tolerance_);
                 }
                 else{
