@@ -1,8 +1,8 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-13 13:01:19
- * @LastEditTime: 2020-05-13 14:50:19
- * @LastEditors: Zhao Wang
+ * @LastEditTime: 2020-05-20 20:26:29
+ * @LastEditors: Please set LastEditors
  * @Description: Implementation of interface of CLFLosController class
  * @FilePath: /los_nav/src/clf_los_controller.cpp
  */
@@ -45,6 +45,8 @@ namespace los_nav{
         if(det_phi_ < -180){
             det_phi_ += 360;
         }
+
+        det_phi_ = det_phi_ / 64;
 
         if(std::abs(ye) < 0.5){
             det_phi_diff_ += det_phi_;

@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-14 11:17:22
- * @LastEditTime: 2020-05-14 12:32:15
+ * @LastEditTime: 2020-05-20 20:26:16
  * @LastEditors: Please set LastEditors
  * @Description: Implementation of CirFLosController class for circle following
  * @FilePath: /los_nav/src/cirf_los_controller.cpp
@@ -39,12 +39,16 @@ namespace los_nav{
             det_phi_ = det_phi_ + 360;
         }
 
+        det_phi_ = det_phi_ / 64;
+
         if(std::abs(ye) < 0.8){
             det_phi_diff_ += det_phi_;
         }
 
+        // det_phi_ = det_phi_ / 32;
+
         double r = this->los_ctrl_param_.kp_ * det_phi_ + this->los_ctrl_param_.ki_ * det_phi_diff_;
-        return std::make_pair(r, 1);
+        return std::make_pair(r, 0);
     }
 }; // end of ns
 
