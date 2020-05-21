@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-07 17:40:29
- * @LastEditTime: 2020-05-16 09:57:34
+ * @LastEditTime: 2020-05-21 12:13:12
  * @LastEditors: Please set LastEditors
  * @Description: Definition of RosLosNav class
  * @FilePath: /los_nav/include/los_nav/ros_los_nav.h
@@ -22,13 +22,15 @@
 #include <dynamic_reconfigure/server.h>
 #include <visualization_msgs/Marker.h>
 #include <std_srvs/Empty.h>
+#include <nav_msgs/Path.h>
 
 #include <vector>
 #include <string>
 #include <boost/thread.hpp>
+#include <boost/chrono.hpp>
 #include <cmath>
-#include <thread>
 #include <pthread.h>
+#include <deque>
 
 namespace los_nav{
 typedef actionlib::SimpleActionServer<los_nav_msgs::LosNavAction> LosNavActionServer;
@@ -69,6 +71,11 @@ private:
     std::vector<geometry_msgs::Point> circleToPoints(double ori_x, double ori_y, double radius);
 
     void switchController(const los_nav_msgs::Mission& current_mission);
+
+    void trajectoryPublish(); // thread function for USV trajectory publishing
+    
+    void trajectoryHidden(); 
+
 private:
     LosNav* performer_;
     tf::TransformListener& tf_;
@@ -85,9 +92,13 @@ private:
     double dx_err_, dy_err_;
     double los_factor_;
 
+    nav_msgs::Path path_;
+
     tf::Stamped<tf::Pose> global_pose_;
     
     // std::thread type_thread_; // discarded
+    boost::thread* traj_pub_thread_; // trajectory publish thread
+    boost::thread* traj_hide_thread_;
     pthread_rwlock_t flock_;
 
     ros::Subscriber goal_sub_;
@@ -98,6 +109,8 @@ private:
 
     /* Preserved for visualized parameters publisher */
     ros::Publisher vis_pub_;
+    ros::Subscriber odom_sub_;
+    ros::Publisher path_pub_;
 
     visualization_msgs::Marker marker_;
 }; // end of class

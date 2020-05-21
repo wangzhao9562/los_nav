@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-11 
- * @LastEditTime: 2020-05-20 20:43:57
+ * @LastEditTime: 2020-05-21 12:17:33
  * @LastEditors: Please set LastEditors
  * @Description: Implementation of interface of RosLosNav class
  * @FilePath: /los_nav/src/clf_los_controller.cpp
@@ -49,9 +49,17 @@ namespace los_nav{
 
         vis_pub_ = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
 
+        path_pub_ = nh.advertise<nav_msgs::Path>("trajectory", 1);
+
         los_nav_as_ = new LosNavActionServer(ros::NodeHandle(), "los_nav", boost::bind(&RosLosNav::executeCb, this, _1), false);
 
         ROS_INFO("Create control performer");
+  
+        path_.header.frame_id = global_frame_;
+        path_.header.stamp = ros::Time::now();
+        traj_pub_thread_ = new boost::thread(boost::bind(&RosLosNav::trajectoryPublish, this));
+        traj_hide_thread_ = new boost::thread(boost::bind(&RosLosNav::trajectoryHidden, this));
+
         performer_ = new LosNav(kp_, kd_, ki_, dx_err_, dy_err_, los_factor_);
         performer_->initialize(stop_tolerance_);
 
@@ -65,10 +73,19 @@ namespace los_nav{
     RosLosNav::~RosLosNav(){
         if(los_nav_as_){
             delete los_nav_as_;
+            los_nav_as_ = nullptr;
         }
-
         if(performer_){
             delete performer_;
+            performer_ = nullptr;
+        }
+        if(traj_pub_thread_){
+            delete traj_pub_thread_;
+            traj_pub_thread_ = nullptr;
+        }
+        if(traj_hide_thread_){
+            delete traj_hide_thread_;
+            traj_hide_thread_ = nullptr;
         }
     }
 
@@ -438,5 +455,44 @@ namespace los_nav{
             break;
         }       
     }    
+
+    void RosLosNav::trajectoryPublish()
+    {
+        ros::NodeHandle nh;
+        while(nh.ok()){
+            // get robot pose
+            tf::Stamped<tf::Pose> global_pose;
+            getRobotPose(global_pose);
+
+            geometry_msgs::PoseStamped current_position;
+            tf::poseStampedTFToMsg(global_pose, current_position);
+
+            pthread_rwlock_wrlock(&flock_);
+            path_.poses.push_back(current_position);
+            path_pub_.publish(path_);
+            pthread_rwlock_unlock(&flock_);
+
+            boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+        }
+    }
+
+    void RosLosNav::trajectoryHidden(){
+        ros::NodeHandle nh;
+        ros::Time start_time = ros::Time::now();
+        while(nh.ok()){
+            ros::Time current_time = ros::Time::now();
+            nav_msgs::Path copy_path;
+            // hide half past part of path
+            if((current_time - start_time) >= ros::Duration(120)){
+                for(int i = path_.poses.size() / 2; i < path_.poses.size(); i++){
+                    copy_path.poses.push_back(path_.poses[i]);
+                }
+                pthread_rwlock_wrlock(&flock_);
+                path_.poses = copy_path.poses;
+                pthread_rwlock_unlock(&flock_);
+            }
+            boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+        }
+    }
 
 }; // end of ns
