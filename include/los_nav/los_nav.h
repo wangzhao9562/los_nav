@@ -20,7 +20,7 @@ public:
     ~LosNav();
 
     bool initialize(double stop_tolerance);
-    bool initialize(CLine line, double los_factor,  double stop_tolerance);
+    bool initialize(const CLine& line, double los_factor,  double stop_tolerance);
     bool initialize(Circle circle, double los_factor, double stop_tolerance);
 
     bool isControllerAvailable()const{

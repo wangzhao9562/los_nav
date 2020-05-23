@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-07 
- * @LastEditTime: 2020-05-14 12:27:44
+ * @LastEditTime: 2020-05-23 21:14:08
  * @LastEditors: Please set LastEditors
  * @Description: Implementation of interface of LosNav class
  * @FilePath: /los_nav/src/pf_los_controller.cpp
@@ -10,6 +10,7 @@
 #include <los_nav/pf_los_controller.h>
 #include <los_nav/clf_los_controller.h>
 #include <los_nav/cirf_los_controller.h>
+#include <iostream>
 
 namespace los_nav{
     LosNav::LosNav(double kp, double kd, double ki, 
@@ -45,14 +46,14 @@ namespace los_nav{
         return true;
     }
 
-    bool LosNav::initialize(CLine line, double los_factor, double stop_tolerance){
+    bool LosNav::initialize(const CLine& line, double los_factor, double stop_tolerance){
         mission_type_ = MissionType::C_LINE;
         if(base_controller_){
             delete base_controller_;
             is_init_ = false;
         }
         /* Reserved for implementation*/
-        base_controller_ = new CLFLosController(los_ctrl_param_, los_factor, stop_tolerance);
+        base_controller_ = new CLFLosController(los_ctrl_param_, line, los_factor, stop_tolerance);
         is_init_ = true;
         return true;
     }
