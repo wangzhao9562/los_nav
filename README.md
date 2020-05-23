@@ -1,7 +1,7 @@
 # los_nav  
 Implementation of line-of-sight guidance for robot to execute some missions like point following, line following and circle following.  
   
-# Complile     
+# Compile     
 cd [catkin work space]    
 git clone https://github.com/wangzhao9562/los_nav.git    
 catkin_make    
