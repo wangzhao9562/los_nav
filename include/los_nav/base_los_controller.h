@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-07 13:08:08
- * @LastEditTime: 2020-05-17 09:01:49
+ * @LastEditTime: 2020-05-23 21:20:04
  * @LastEditors: Please set LastEditors
  * @Description: Definition of BaseLosController class, the fundamental class of all los controller
  * @FilePath: /los_nav/include/los_nav/base_los_controller.h
@@ -21,7 +21,7 @@ struct LosCtrlParam{
         ki_ = pid_param.ki_;
         kd_ = pid_param.kd_;
         dx_err_ = pid_param.dx_err_;
-        dx_err_ = pid_param.dy_err_;
+        dy_err_ = pid_param.dy_err_;
     }
     double kp_, ki_, kd_;
     double dx_err_, dy_err_;

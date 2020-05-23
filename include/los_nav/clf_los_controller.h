@@ -1,8 +1,8 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-13 11:13:33
- * @LastEditTime: 2020-05-13 13:36:21
- * @LastEditors: Zhao Wang
+ * @LastEditTime: 2020-05-23 21:16:18
+ * @LastEditors: Please set LastEditors
  * @Description: Definition of CLFLosController class
  * @FilePath: /los_nav/include/los_nav/slf_los_controller.h
  */
@@ -22,8 +22,8 @@ public:
      * @param LosCtrlParam pid_param PID parameters for LOS controller
      * @param Point Coordinate of target point
      */ 
-    CLFLosController(LosCtrlParam pid_param, double los_factor, double stop_tolerance) : 
-        BaseLosController(pid_param, stop_tolerance), factor_(los_factor){}
+    CLFLosController(LosCtrlParam pid_param, const CLine& line, double stop_tolerance, double los_factor = 3.5) : 
+        BaseLosController(pid_param, stop_tolerance), line_(line), factor_(los_factor){}
 
     /**
      * @brief Compute control quantity for point follow
