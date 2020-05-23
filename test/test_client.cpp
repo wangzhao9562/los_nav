@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-15 13:06:13
- * @LastEditTime: 2020-05-20 18:43:06
+ * @LastEditTime: 2020-05-23 19:59:04
  * @LastEditors: Please set LastEditors
  * @Description: Test client for los nav
  * @FilePath: /los_nav/test/test_client.cpp
@@ -47,8 +47,8 @@ int main(int argc, char** argv){
     LosNavActionClient los_nav_ac("los_nav", true);
     ROS_INFO("Los nav client started");
 
-    los_nav_ac.waitForServer();
-    ROS_INFO("Action server started, send mission message");
+    // los_nav_ac.waitForServer();
+    // ROS_INFO("Action server started, send mission message");
 
     los_nav_msgs::Mission mission;
 
@@ -81,13 +81,13 @@ int main(int argc, char** argv){
             }
 
             mission.mission_type = 1;
+            los_nav_msgs::CommonLine c_line;
 
             for(int i = 2; i < argc; i += 4){
                 const char* line_start_x = argv[i];
                 const char* line_start_y = argv[i + 1];
                 const char* line_end_x = argv[i + 2];
                 const char* line_end_y = argv[i + 3]; 
-                los_nav_msgs::CommonLine c_line;
                 c_line.start_x = std::atof(line_start_x);
                 c_line.start_y = std::atof(line_start_y);
                 c_line.end_x = std::atof(line_end_x);
@@ -99,13 +99,18 @@ int main(int argc, char** argv){
                 c_line.b = b;
                 c_line.is_reverse = false;
 
+                mission.goal.header.frame_id = "wamv/odom";
+                mission.goal.header.stamp = ros::Time::now();
                 mission.goal.pose.position.x = c_line.end_x;
                 mission.goal.pose.position.y = c_line.end_y;
                 mission.goal.pose.position.z = 0.0;
                 mission.goal.pose.orientation.w = 1.0;
 
-                mission.lines.push_back(c_line);
+                // mission.lines.push_back(c_line);
+                // std::cout << mission.lines[0].k << "," << mission.lines[0].b << std::endl;
             }
+            mission.lines.push_back(c_line);
+            std::cout << mission.lines[0].k << "," << mission.lines[0].b << std::endl;
 
             // mission_pub.publish(mission);
         }
@@ -131,6 +136,9 @@ int main(int argc, char** argv){
         ROS_ERROR("Undefined mission type!");
         break;
     } 
+
+    los_nav_ac.waitForServer();
+    ROS_INFO("Action server started, send mission message");
 
     los_nav_msgs::LosNavGoal goal;
     goal.mission_msgs = mission;
