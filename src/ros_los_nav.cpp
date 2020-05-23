@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-11 
- * @LastEditTime: 2020-05-21 12:17:33
+ * @LastEditTime: 2020-05-23 21:12:25
  * @LastEditors: Please set LastEditors
  * @Description: Implementation of interface of RosLosNav class
  * @FilePath: /los_nav/src/clf_los_controller.cpp
@@ -27,10 +27,10 @@ namespace los_nav{
         private_nh.param("global_frame", global_frame_, std::string("wamv/odom"));
         private_nh.param("base_frame", base_frame_, std::string("wamv/base_link"));
         private_nh.param("control_frequency", control_frequency_, 5.0); // hz
-        private_nh.param("kp", kp_, 0.2);
+        private_nh.param("kp", kp_, 0.8);
         private_nh.param("kd", kd_, 0.0);
-        private_nh.param("ki", ki_, 0.0);
-        private_nh.param("dx_err", dx_err_, 2.0);
+        private_nh.param("ki", ki_, 0.15);
+        private_nh.param("dx_err", dx_err_, -2.0);
         private_nh.param("dy_err", dy_err_, 4.0);
         private_nh.param("factor", los_factor_, 3.5);
 
@@ -44,7 +44,7 @@ namespace los_nav{
         cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1); // publish velocity command
         // goal_sub_ = simple_nh.subscribe<geometry_msgs::PoseStamped>("goal", 1, boost::bind(&RosLosNav::goalCb, this, _1));
         // mission_type_sub_ = nh.subscribe<los_nav_msgs::Mission>("mission_type", 1, boost::bind(&RosLosNav::missionTypeCb, this, _1));
-        action_goal_pub_ = action_nh.advertise<los_nav_msgs::LosNavActionGoal>("goal", 1);
+        // action_goal_pub_ = action_nh.advertise<los_nav_msgs::LosNavActionGoal>("goal", 1);
         current_goal_pub_ = private_nh.advertise<los_nav_msgs::Mission>("current_goal", 1);
 
         vis_pub_ = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
@@ -401,9 +401,15 @@ namespace los_nav{
             break;
             case 1:
             {
+                // ROS_WARN_STREAM("lines num: " << current_mission.lines.size());
+                // ROS_WARN_STREAM("target: " << "x: " << current_mission.goal.pose.position.x << " y: " << current_mission.goal.pose.position.y);
+                // ROS_WARN_STREAM("line: sx, sy " << "x: " << current_mission.lines[0].end_x << "y: " << current_mission.lines[0].start_x);
+                double k = static_cast<double>(current_mission.lines[0].start_y - current_mission.lines[0].end_y) / (current_mission.lines[0].start_x - current_mission.lines[0].end_x); 
+                double b = current_mission.lines[0].start_y - current_mission.lines[0].start_x * k;
+                // ROS_WARN_STREAM("line: k, b " << "k: " << current_mission.lines[0].k << "b: " << current_mission.lines[0].b);
                 CLine line{current_mission.lines[0].start_x, current_mission.lines[0].start_y,
-                            current_mission.lines[0].end_x, current_mission.lines[0].end_y,
-                            current_mission.lines[0].k, current_mission.lines[0].b, current_mission.lines[0].is_reverse};
+                           current_mission.lines[0].end_x, current_mission.lines[0].end_y,
+                           current_mission.lines[0].k, current_mission.lines[0].b, current_mission.lines[0].is_reverse};
                 geometry_msgs::Point s_p;
                 s_p.x = current_mission.lines[0].start_x;
                 s_p.y = current_mission.lines[0].start_y;
@@ -412,6 +418,9 @@ namespace los_nav{
                 e_p.x = current_mission.lines[0].end_x;
                 e_p.y = current_mission.lines[0].end_y;
                 e_p.z = 0.0;
+
+                ROS_WARN_STREAM("Cline: k: " << line.k_ << " b: " << line.b_);
+
                 std::vector<geometry_msgs::Point> p_vec;
                 p_vec.push_back(s_p);
                 p_vec.push_back(e_p);
