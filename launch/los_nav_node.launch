@@ -1,8 +1,11 @@
 <?xml version="1.0"?>
 <launch>
+  <arg name="rviz_config" default="$(find los_nav)/rviz/rviz_los.rviz" />
+
   <node pkg="los_nav" name="los_nav_node" type="los_nav_node">
-    <param name="global_frame" value="wamv/odom" />
-    <param name="base_frame" value="wamv/base_link" />
-    <param name="kp" value="0.2" />
-  </node>
+    <param name="kp" value="0.8" />
+    <param name="ki" value="0.0" />
+    <param name="kd" value="0.0" /> 
+ </node>
+ <node pkg="rviz" type="rviz" name="los_rviz" args="-d $(arg rviz_config)" />
 </launch>
