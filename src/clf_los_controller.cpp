@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-13 13:01:19
- * @LastEditTime: 2020-05-23 21:31:26
+ * @LastEditTime: 2020-05-30 11:22:40
  * @LastEditors: Please set LastEditors
  * @Description: Implementation of interface of CLFLosController class
  * @FilePath: /los_nav/src/clf_los_controller.cpp
@@ -11,6 +11,10 @@
 
 namespace los_nav{
     std::pair<double, int> CLFLosController::computeCtrlQuantity(double x, double y, double tx, double ty, double yaw){
+        std::cout << "x: " << x << " y: " << y << " yaw: " << yaw << std::endl;
+
+        double pre_det_phi = det_phi_;
+        
         double dist = distance(x, y, tx, ty);
         
         if(dist <= this->stop_tolerance_){
@@ -27,79 +31,48 @@ namespace los_nav{
             line_.is_reverse_ = false;
         }
 
-        std::cout << "k: " << line_.k_ << " b: " << line_.b_ << std::endl;
+        std::cout << "k: " << line_.k_ << " b: " << line_.b_ << " is_rev: " << line_.is_reverse_ << std::endl;
         std::cout << "dy err: " << los_ctrl_param_.dy_err_ << std::endl;
+
+         
+        double target_y = line_.k_ * x + line_.b_;
+        double line_dir = std::atan2(line_.end_y_ - line_.start_y_, line_.end_x_ - line_.start_x_);
+ 
+        double ye = (y - target_y) * std::cos(line_dir);
+        double ref_phi =  -std::atan(ye / factor_);
+
+        if(line_.is_reverse_)
+        {
+            if(ref_phi < 0)
+                ref_phi = -PI - ref_phi;
+            else
+                ref_phi = PI - ref_phi;
+        }
+
+        // det_phi_ = yaw - (line_dir - ref_phi);
+
+        det_phi_ = ref_phi - (yaw - line_dir);
+
+        if(det_phi_ > PI){
+            det_phi_ = det_phi_ - 2 * PI;
+        }
+        if(det_phi_ < -PI)
+        {
+            det_phi_ = det_phi_ + 2 * PI;
+        }
         
-        double target_y;
-        /*
-        if(line_.is_reverse_){
-            target_y = line_.k_ * x + line_.b_ - 6 * this->los_ctrl_param_.dy_err_ * std::sqrt(line_.k_ * line_.k_ + 1);
-        }
-        else{
-            target_y = line_.k_ * x + line_.b_ + 6 * this->los_ctrl_param_.dy_err_ * std::sqrt(line_.k_ * line_.k_ + 1);
-        }
-        */
-        target_y = line_.k_ * x + line_.b_;
-
-        std::cout << "current pos: " << x << ", " << y << "target y: "<< ty << " los target y: " << target_y << std::endl;
-
-        /*
-        double ref_dir = std::atan(line_.k_) / PI * 180;
-        double det_y = y - target_y;
-        double ye = det_y * std::cos(ref_dir / 180 * PI);
-        double ref_phi = -std::atan(ye / factor_) / PI * 180;
-        */
-
-        double ref_dir = std::atan(line_.k_);
-        double det_y = y - target_y;
-        double ye = det_y * std::cos(ref_dir);
-        double ref_phi = -std::atan(ye / factor_);
-
-        if(line_.is_reverse_){
-           if(ref_phi < 0){
-               // ref_phi = -180 - ref_phi;
-               ref_phi = -PI -ref_phi;
-           }
-           else{
-               // ref_phi = 180 - ref_phi;
-               ref_phi = PI - ref_phi;
-           }
-        }
-
-        // det_phi_ = ref_phi - (yaw * 180 / PI - ref_dir);
-        det_phi_ = ref_phi - (yaw - ref_dir);
-        /*
-        if(det_phi_ > 180){
-            det_phi_ -= 360;
-        }        
-        if(det_phi_ < -180){
-            det_phi_ += 360;
-        }
-        */
-        if(det_phi_ > PI)
-        {
-            det_phi_ -= 2 * PI;
-        }
-        else if(det_phi_ < -PI)
-        {
-            det_phi_ += 2 * PI;
-        }
-
-        // det_phi_ = det_phi_ / 64;
-
+        std::cout << "ye: " << ye << " line_dir: " << line_dir << " ref_phi: " << ref_phi << " yaw: " << yaw << " det_phi: " << det_phi_ << std::endl;
+        std::cout << "factor: " << factor_ << std::endl;
+        
         if(std::abs(ye) < 0.5){
-            det_phi_diff_ += det_phi_;
+            det_phi_int_ += det_phi_;
         }
 
-        double r = this->los_ctrl_param_.kp_ * det_phi_  + this->los_ctrl_param_.ki_ * det_phi_diff_;
-        /*
-        if(r > 1.5707){
-            r = 1.5707;
-        }
-        if(r < -1.5707){
-            r = -1.5707;
-        }
-        */
+        det_phi_diff_ = det_phi_ - pre_det_phi;
+
+        double r = this->los_ctrl_param_.kp_ * det_phi_  + this->los_ctrl_param_.ki_ * det_phi_diff_ + 
+            this->los_ctrl_param_.kd_ * det_phi_diff_;
+
         return std::make_pair(r, 0);
     }
 }; // end of ns
