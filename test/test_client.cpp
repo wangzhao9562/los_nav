@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-15 13:06:13
- * @LastEditTime: 2020-05-23 19:59:04
+ * @LastEditTime: 2020-05-30 12:48:31
  * @LastEditors: Please set LastEditors
  * @Description: Test client for los nav
  * @FilePath: /los_nav/test/test_client.cpp
@@ -129,6 +129,9 @@ int main(int argc, char** argv){
             mission.circle.origin_x = std::atof(circle_origin_x);
             mission.circle.origin_y = std::atof(circle_origin_y);
             mission.circle.r = std::atof(circle_r);
+            std::cout << "origin x: " << mission.circle.origin_x << " origin_y: " << 
+                                         mission.circle.origin_y << " radius: " << 
+                                         mission.circle.r << std::endl;
             // mission_pub.publish(mission);
         }
         break;
