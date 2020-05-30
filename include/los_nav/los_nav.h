@@ -1,8 +1,8 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-07 
- * @LastEditTime: 2020-05-10 
- * @LastEditors: Zhao Wang
+ * @LastEditTime: 2020-05-29 22:18:20
+ * @LastEditors: Please set LastEditors
  * @Description: Definition of LosNav class
  * @FilePath: /los_nav/src/pf_los_controller.cpp
  */
@@ -19,9 +19,9 @@ public:
     LosNav(double kp, double kd, double ki, double dx_err, double dy_err, double los_factor);
     ~LosNav();
 
-    bool initialize(double stop_tolerance);
-    bool initialize(const CLine& line, double los_factor,  double stop_tolerance);
-    bool initialize(Circle circle, double los_factor, double stop_tolerance);
+    bool initialize(const double& stop_tolerance);
+    bool initialize(const CLine& line, const double& los_factor, const double& stop_tolerance);
+    bool initialize(const Circle& circle, const double& los_factor, const double& stop_tolerance);
 
     bool isControllerAvailable()const{
         return is_init_;

@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-07 
- * @LastEditTime: 2020-05-23 21:14:08
+ * @LastEditTime: 2020-05-30 12:56:55
  * @LastEditors: Please set LastEditors
  * @Description: Implementation of interface of LosNav class
  * @FilePath: /los_nav/src/pf_los_controller.cpp
@@ -35,7 +35,7 @@ namespace los_nav{
         is_init_ = false;
     }
 
-    bool LosNav::initialize(double stop_tolerance){
+    bool LosNav::initialize(const double& stop_tolerance){
         mission_type_ = MissionType::POINT;
         if(base_controller_){
             delete base_controller_;
@@ -46,26 +46,28 @@ namespace los_nav{
         return true;
     }
 
-    bool LosNav::initialize(const CLine& line, double los_factor, double stop_tolerance){
+    bool LosNav::initialize(const CLine& line, const double& los_factor, const double& stop_tolerance){
         mission_type_ = MissionType::C_LINE;
         if(base_controller_){
             delete base_controller_;
             is_init_ = false;
         }
+          std::cout << "In los nav, factor: " << los_factor << std::endl;
         /* Reserved for implementation*/
         base_controller_ = new CLFLosController(los_ctrl_param_, line, los_factor, stop_tolerance);
         is_init_ = true;
         return true;
     }
 
-    bool LosNav::initialize(Circle circle, double los_factor, double stop_tolerance){
+    bool LosNav::initialize(const Circle& circle, const double& los_factor, const double& stop_tolerance){
         mission_type_ = MissionType::CIRCLE;
         if(base_controller_){
             delete base_controller_;
             is_init_ = false;
         }
+        std::cout << "In los nav, circle param: " << circle.origin_x_ << "," << circle.origin_y_ << "," << circle.r_ << std::endl;
         /* Reserved for implementation*/
-        base_controller_ = new CirFLosController(los_ctrl_param_, los_factor, stop_tolerance);
+        base_controller_ = new CirFLosController(los_ctrl_param_, circle, los_factor, stop_tolerance);
         is_init_ = true;
         return true;
     }
