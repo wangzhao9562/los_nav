@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-11 
- * @LastEditTime: 2020-05-23 21:12:25
+ * @LastEditTime: 2020-05-30 13:06:37
  * @LastEditors: Please set LastEditors
  * @Description: Implementation of interface of RosLosNav class
  * @FilePath: /los_nav/src/clf_los_controller.cpp
@@ -26,13 +26,13 @@ namespace los_nav{
         private_nh.param("transform_tolerance", transform_tolerance_, 0.2);
         private_nh.param("global_frame", global_frame_, std::string("wamv/odom"));
         private_nh.param("base_frame", base_frame_, std::string("wamv/base_link"));
-        private_nh.param("control_frequency", control_frequency_, 5.0); // hz
+        private_nh.param("control_frequency", control_frequency_, 20.0); // hz
         private_nh.param("kp", kp_, 0.8);
         private_nh.param("kd", kd_, 0.0);
-        private_nh.param("ki", ki_, 0.15);
+        private_nh.param("ki", ki_, 0.0);
         private_nh.param("dx_err", dx_err_, -2.0);
         private_nh.param("dy_err", dy_err_, 4.0);
-        private_nh.param("factor", los_factor_, 3.5);
+        private_nh.param("factor", los_factor_, 3.0);
 
         ROS_INFO_STREAM("Follow velocity: " << vel_);
         ROS_INFO_STREAM("Transform tolerance: " << stop_tolerance_);
@@ -177,7 +177,7 @@ namespace los_nav{
 
                 if(ctrl_fb.second == 0){
                     cmd_vel.linear.x = vel_;
-                    cmd_vel.angular.z = -ctrl_fb.first;
+                    cmd_vel.angular.z = ctrl_fb.first;
                     ROS_WARN_STREAM("cmd_vel: " << "linear velocity x: " << vel_ << " angular velocity z: " << cmd_vel.angular.z);
                     cmd_vel_pub_.publish(cmd_vel);
                     pthread_rwlock_unlock(&flock_);
@@ -430,6 +430,7 @@ namespace los_nav{
                     generateVisLineStrip(marker_, p_vec, current_mission.header.frame_id);
                     // Initialize los nav performer
                     ROS_INFO("Switch to common line follow controller");
+                    std::cout << "los_factor: " << los_factor_ << std::endl; 
                     performer_->initialize(line, los_factor_, stop_tolerance_);
                 }
                 else{
@@ -447,6 +448,7 @@ namespace los_nav{
                     ROS_INFO("Update visualization marker");
                     generateVisCircle(marker_, current_mission.circle.origin_x, current_mission.circle.origin_y, current_mission.circle.r, 
                             current_mission.header.frame_id);
+                    ROS_INFO_STREAM("Circle information: " << current_mission.circle.origin_x << "," << current_mission.circle.origin_y << "," << current_mission.circle.r);
                     ROS_INFO("Switch to circle following mission");        
                     performer_->initialize(circle, los_factor_, stop_tolerance_);
                 }
