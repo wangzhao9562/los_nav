@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-05-07 15:08:09
- * @LastEditTime: 2020-05-23 21:18:55
+ * @LastEditTime: 2020-05-30 12:51:12
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /los_nav/include/los_nav/common.h
@@ -55,6 +55,11 @@ namespace los_nav{
     struct Circle{
         Circle(){};
         Circle(double origin_x, double origin_y, double r) : origin_x_(origin_x), origin_y_(origin_y), r_(r){}
+        Circle(const Circle& circle){
+            origin_x_ = circle.origin_x_;
+            origin_y_ = circle.origin_y_;
+            r_ = circle.r_;
+        }
         double origin_x_, origin_y_;
         double r_;
     };
