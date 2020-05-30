@@ -1,8 +1,8 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-07 15:03:37
- * @LastEditTime: 2020-05-10 13:56:59
- * @LastEditors: Zhao Wang
+ * @LastEditTime: 2020-05-29 21:53:05
+ * @LastEditors: Please set LastEditors
  * @Description: Implementation of interface of PFLosController class
  * @FilePath: /los_nav/src/pf_los_controller.cpp
  */
@@ -18,7 +18,7 @@ namespace los_nav{
         }
 
         double target_yaw = std::atan2(y - ty, x - tx);
-        double det_yaw = target_yaw - yaw;
+        double det_yaw = yaw - target_yaw;
 
         if(std::abs(det_yaw) > PI){
             if(det_yaw > 0){
