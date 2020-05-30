@@ -1,8 +1,8 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-14 11:12:18
- * @LastEditTime: 2020-05-14 11:12:19
- * @LastEditors: Zhao Wang
+ * @LastEditTime: 2020-05-30 13:07:55
+ * @LastEditors: Please set LastEditors
  * @Description: Definition of CirFLosController class for circle following
  * @FilePath: /los_nav/include/los_nav/cf_los_controller.h
  */
@@ -10,6 +10,7 @@
 #define CIRF_LOS_CONTROLLER_H_
 
 #include <los_nav/base_los_controller.h>
+#include <los_nav/common.h>
 
 namespace los_nav{
 class CirFLosController : public BaseLosController{
@@ -19,8 +20,8 @@ public:
      * @param LosCtrlParam pid_param PID parameters for LOS controller
      * @param Point Coordinate of target point
      */ 
-    CirFLosController(LosCtrlParam pid_param, double los_factor, double stop_tolerance) : 
-        BaseLosController(pid_param, stop_tolerance), factor_(los_factor){}
+    CirFLosController(LosCtrlParam pid_param, const Circle& circle, double los_factor = 3.5, double stop_tolerance = 1.0) : 
+        BaseLosController(pid_param, stop_tolerance), circle_(circle), factor_(los_factor){det_phi_=0; det_phi_diff_ = 0;}
 
     /**
      * @brief Compute control quantity for point follow
@@ -35,7 +36,7 @@ public:
 private:
     Circle circle_;
     double factor_;
-    double det_phi_{0.0}, det_phi_diff_{0.0};    
+    double det_phi_, det_phi_diff_;    
 }; // end of class
 } // end of ns
 
