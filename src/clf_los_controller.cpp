@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-13 13:01:19
- * @LastEditTime: 2020-05-30 11:22:40
+ * @LastEditTime: 2020-06-03 16:51:22
  * @LastEditors: Please set LastEditors
  * @Description: Implementation of interface of CLFLosController class
  * @FilePath: /los_nav/src/clf_los_controller.cpp
@@ -14,6 +14,8 @@ namespace los_nav{
         std::cout << "x: " << x << " y: " << y << " yaw: " << yaw << std::endl;
 
         double pre_det_phi = det_phi_;
+        det_pre_ = det_last_;
+        det_last_ = det_phi_; 
         
         double dist = distance(x, y, tx, ty);
         
@@ -64,14 +66,18 @@ namespace los_nav{
         std::cout << "ye: " << ye << " line_dir: " << line_dir << " ref_phi: " << ref_phi << " yaw: " << yaw << " det_phi: " << det_phi_ << std::endl;
         std::cout << "factor: " << factor_ << std::endl;
         
-        if(std::abs(ye) < 0.5){
-            det_phi_int_ += det_phi_;
-        }
+        // if(std::abs(ye) < 1.5){
+        //      det_phi_int_ += det_phi_;
+        // }
+        // det_phi_int_ += det_phi_;
 
-        det_phi_diff_ = det_phi_ - pre_det_phi;
+        // det_phi_diff_ = det_phi_ - pre_det_phi;
 
-        double r = this->los_ctrl_param_.kp_ * det_phi_  + this->los_ctrl_param_.ki_ * det_phi_diff_ + 
-            this->los_ctrl_param_.kd_ * det_phi_diff_;
+        // double r = this->los_ctrl_param_.kp_ * det_phi_  + this->los_ctrl_param_.ki_ * det_phi_int_ + 
+        //     this->los_ctrl_param_.kd_ * det_phi_diff_;
+        
+        double r = this->los_ctrl_param_.kp_ * (det_phi_ - det_last_) + this->los_ctrl_param_.ki_ * det_phi_ +
+            this->los_ctrl_param_.kd_ * (det_phi_ - 2 * det_last_ + det_pre_);
 
         return std::make_pair(r, 0);
     }

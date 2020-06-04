@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-13 11:13:33
- * @LastEditTime: 2020-05-29 22:30:16
+ * @LastEditTime: 2020-06-04 15:55:12
  * @LastEditors: Please set LastEditors
  * @Description: Definition of CLFLosController class
  * @FilePath: /los_nav/include/los_nav/slf_los_controller.h
@@ -39,7 +39,9 @@ public:
 private:
     CLine line_;
     double factor_;
-    double det_phi_, det_phi_diff_, det_phi_int_; 
+    double det_phi_;
+    // double det_phi_diff_, det_phi_int_;
+    double det_pre_, det_last_; 
 }; // end of class
 }; // end of ns
 
