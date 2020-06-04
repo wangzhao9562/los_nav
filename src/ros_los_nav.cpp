@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-11 
- * @LastEditTime: 2020-05-30 13:06:37
+ * @LastEditTime: 2020-06-04 17:03:25
  * @LastEditors: Please set LastEditors
  * @Description: Implementation of interface of RosLosNav class
  * @FilePath: /los_nav/src/clf_los_controller.cpp
@@ -21,15 +21,15 @@ namespace los_nav{
         ros::NodeHandle action_nh("los_nav");
 
         // ros parameters setting
-        private_nh.param("velocity", vel_, 0.5);
-        private_nh.param("stop_tolerance", stop_tolerance_, 1.0);
+        private_nh.param("velocity", vel_, 0.4);
+        private_nh.param("stop_tolerance", stop_tolerance_, 1.5);
         private_nh.param("transform_tolerance", transform_tolerance_, 0.2);
         private_nh.param("global_frame", global_frame_, std::string("wamv/odom"));
         private_nh.param("base_frame", base_frame_, std::string("wamv/base_link"));
         private_nh.param("control_frequency", control_frequency_, 20.0); // hz
-        private_nh.param("kp", kp_, 0.8);
-        private_nh.param("kd", kd_, 0.0);
-        private_nh.param("ki", ki_, 0.0);
+        private_nh.param("kp", kp_, 0.5);
+        private_nh.param("kd", kd_, 5.0);
+        private_nh.param("ki", ki_, 0.5);
         private_nh.param("dx_err", dx_err_, -2.0);
         private_nh.param("dy_err", dy_err_, 4.0);
         private_nh.param("factor", los_factor_, 3.0);
@@ -58,7 +58,7 @@ namespace los_nav{
         path_.header.frame_id = global_frame_;
         path_.header.stamp = ros::Time::now();
         traj_pub_thread_ = new boost::thread(boost::bind(&RosLosNav::trajectoryPublish, this));
-        traj_hide_thread_ = new boost::thread(boost::bind(&RosLosNav::trajectoryHidden, this));
+        // traj_hide_thread_ = new boost::thread(boost::bind(&RosLosNav::trajectoryHidden, this));
 
         performer_ = new LosNav(kp_, kd_, ki_, dx_err_, dy_err_, los_factor_);
         performer_->initialize(stop_tolerance_);
