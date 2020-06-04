@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-14 11:17:22
- * @LastEditTime: 2020-05-30 12:36:35
+ * @LastEditTime: 2020-06-04 18:14:44
  * @LastEditors: Please set LastEditors
  * @Description: Implementation of CirFLosController class for circle following
  * @FilePath: /los_nav/src/cirf_los_controller.cpp
@@ -11,6 +11,10 @@
 
 namespace los_nav{
     std::pair<double, int> CirFLosController::computeCtrlQuantity(double x, double y, double tx, double ty, double yaw){
+        double pre_det_phi = det_phi_; 
+        det_pre_ = det_last_;
+        det_last_ = det_phi_; 
+
         std::cout << "x: " << x << " y: " << y << " center x: " << circle_.origin_x_ << " center y: " << circle_.origin_y_ << " radius: " << circle_.r_<< std::endl;
         double ye = distance(x, y, circle_.origin_x_, circle_.origin_y_) - circle_.r_;
         double usv_xy = std::atan2(y - circle_.origin_y_, x - circle_.origin_x_);
@@ -47,15 +51,18 @@ namespace los_nav{
 
         std::cout << "yaw: " << yaw << " det_phi_: " << det_phi_ << std::endl;
 
-        // det_phi_ = det_phi_ / 64;
+        // if(std::abs(ye) < 1.5){
+        //     det_phi_diff_ += det_phi_;
+        // }
 
-        if(std::abs(ye) < 0.8){
-            det_phi_diff_ += det_phi_;
-        }
+        // det_phi_diff_  += det_phi_ - pre_det_phi;
 
-        // det_phi_ = det_phi_ / 32;
 
-        double r = this->los_ctrl_param_.kp_ * det_phi_ + this->los_ctrl_param_.ki_ * det_phi_diff_;
+        // double r = this->los_ctrl_param_.kp_ * det_phi_ + this->los_ctrl_param_.kd_ * det_phi_diff_;
+       
+        double r = this->los_ctrl_param_.kp_ * (det_phi_ - det_last_) + this->los_ctrl_param_.ki_ * det_phi_ +
+            this->los_ctrl_param_.kd_ * (det_phi_ - 2 * det_last_ + det_pre_);
+       
         return std::make_pair(r, 0);
     }
 }; // end of ns

@@ -1,7 +1,7 @@
 /*
  * @Author: Zhao Wang
  * @Date: 2020-05-14 11:12:18
- * @LastEditTime: 2020-05-30 13:07:55
+ * @LastEditTime: 2020-06-04 18:13:50
  * @LastEditors: Please set LastEditors
  * @Description: Definition of CirFLosController class for circle following
  * @FilePath: /los_nav/include/los_nav/cf_los_controller.h
@@ -36,7 +36,8 @@ public:
 private:
     Circle circle_;
     double factor_;
-    double det_phi_, det_phi_diff_;    
+    double det_phi_, det_phi_diff_; 
+    double det_last_, det_pre_;   
 }; // end of class
 } // end of ns
 
